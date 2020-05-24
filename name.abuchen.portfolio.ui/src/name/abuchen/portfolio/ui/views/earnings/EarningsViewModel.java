@@ -22,6 +22,7 @@ import name.abuchen.portfolio.model.Transaction;
 import name.abuchen.portfolio.model.Transaction.Unit;
 import name.abuchen.portfolio.model.TransactionPair;
 import name.abuchen.portfolio.money.CurrencyConverter;
+import name.abuchen.portfolio.money.NeutralCurrencyConverter;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.util.ClientFilterMenu;
 import name.abuchen.portfolio.util.Interval;
@@ -107,6 +108,9 @@ public class EarningsViewModel
     private List<UpdateListener> listeners = new ArrayList<>();
 
     private CurrencyConverter converter;
+    private CurrencyConverter previousConverter; // in case a neutral converter
+                                                 // is used temporarily
+
     private final Client client;
 
     private final ClientFilterMenu clientFilter;
@@ -119,6 +123,7 @@ public class EarningsViewModel
 
     private Mode mode = Mode.ALL;
     private boolean useGrossValue = true;
+    private boolean useOriginalCurrency;
 
     public EarningsViewModel(IPreferenceStore preferences, CurrencyConverter converter, Client client)
     {
@@ -199,6 +204,16 @@ public class EarningsViewModel
         recalculate();
     }
 
+    public boolean useOriginalCurrency()
+    {
+        return useOriginalCurrency;
+    }
+
+    public void setUseOriginalCurrency(boolean useOriginalCurrency)
+    {
+        this.useOriginalCurrency = useOriginalCurrency;
+    }
+
     /**
      * Returns all lines including the sum line
      */
@@ -224,8 +239,25 @@ public class EarningsViewModel
     public void recalculate()
     {
         // the base currency might have changed
-        this.converter = this.converter.with(client.getBaseCurrency());
-
+        if (this.useOriginalCurrency)
+        {
+            if (this.previousConverter == null)
+            {
+                this.previousConverter = this.converter;
+            }
+            // the values are displayed unconverted
+            this.converter = new NeutralCurrencyConverter();
+        }
+        else
+        {
+            // reset the old container if necessary
+            if (previousConverter != null)
+            {
+                this.converter = this.previousConverter;
+                this.previousConverter = null;
+            }
+            this.converter = this.converter.with(client.getBaseCurrency());
+        }
         calculate();
         fireUpdateChange();
     }

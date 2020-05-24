@@ -49,6 +49,10 @@ public class EarningsPerYearMatrixTab extends EarningsPerMonthMatrixTab
         }
 
         createSumColumn(records, layout);
+        if (model.useOriginalCurrency())
+        {
+            createCurrencyColumn(records, layout);
+        }
     }
 
     private void createYearColumn(TableViewer records, TableColumnLayout layout, LocalDate start, int index)
@@ -89,6 +93,34 @@ public class EarningsPerYearMatrixTab extends EarningsPerMonthMatrixTab
 
         createSorter((l1, l2) -> Long.compare(valueFunction.applyAsLong(l1), valueFunction.applyAsLong(l2)))
                         .attachTo(records, column);
+
+        layout.setColumnData(column.getColumn(), new ColumnPixelData(50));
+    }
+
+    private void createCurrencyColumn(TableViewer records, TableColumnLayout layout)
+    {
+        TableViewerColumn column = new TableViewerColumn(records, SWT.RIGHT);
+        column.getColumn().setText("Währung"); //$NON-NLS-1$
+        column.setLabelProvider(new ColumnLabelProvider()
+        {
+
+            @Override
+            public String getText(Object element)
+            {
+                Line line = (EarningsViewModel.Line) element;
+                if (line.getVehicle() != null)
+                {
+                    String currencyCode = line.getVehicle().getCurrencyCode();
+                    return currencyCode.equals(model.getClient().getBaseCurrency()) ? "" : currencyCode; //$NON-NLS-1$
+                }
+                else
+                {
+                    return ""; //$NON-NLS-1$
+                }
+            }
+        });
+
+        // TODO maybe add sorter
 
         layout.setColumnData(column.getColumn(), new ColumnPixelData(50));
     }

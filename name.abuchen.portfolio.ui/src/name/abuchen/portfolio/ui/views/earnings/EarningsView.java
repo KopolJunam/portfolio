@@ -26,6 +26,7 @@ import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.editor.AbstractFinanceView;
 import name.abuchen.portfolio.ui.util.DropDown;
 import name.abuchen.portfolio.ui.util.SimpleAction;
+import name.abuchen.portfolio.ui.util.SimpleAction.Runnable;
 import name.abuchen.portfolio.ui.views.earnings.EarningsViewModel.Mode;
 import name.abuchen.portfolio.util.TextUtil;
 
@@ -149,7 +150,7 @@ public class EarningsView extends AbstractFinanceView
         }));
 
         toolBar.add(new DropDown(Messages.MenuConfigureView, Images.CONFIG, SWT.NONE, manager -> {
-            
+
             EnumSet<Mode> supportGrossValue = EnumSet.of(Mode.DIVIDENDS, Mode.INTEREST, Mode.EARNINGS);
             if (supportGrossValue.contains(model.getMode()))
             {
@@ -165,6 +166,13 @@ public class EarningsView extends AbstractFinanceView
                 manager.add(new Separator());
                 tab.addConfigActions(manager);
             }
+            Runnable r = a -> {
+                model.setUseOriginalCurrency(!model.useOriginalCurrency());
+                model.recalculate();
+            };
+            Action currencyAction = new SimpleAction("Beträge in Originalwährung", r); //$NON-NLS-1$
+            currencyAction.setChecked(model.useOriginalCurrency());
+            manager.add(currencyAction);
         }));
     }
 
